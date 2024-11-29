@@ -85,7 +85,7 @@ for curr_page in range(1, last_page_num):
     
     soup_page = BeautifulSoup(results_html, "html.parser")
     
-    cars=soup_page.find_all("p",attrs={"class":"tit ellipsis"})
+    cars=soup_page.find_all("p",attrs={"class":"tit"})
     links= []
 
         
