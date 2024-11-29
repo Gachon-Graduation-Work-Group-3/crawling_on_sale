@@ -204,9 +204,12 @@ for curr_page in range(1, last_page_num):
             else:
                 acc = info_insur.find("th", string="자동차보험 특수사고").find_next_sibling("td").get_text().split("/")
             acc1 = acc[0].split(":")[1] #전손
-            acc2 = acc[1].split(":")[1] #침수전손
-            acc3 = acc[2].split(":")[1] #침수분손
-            acc4 = acc[3].split(":")[1] #도난
+            if len(acc)>1:
+                acc2 = acc[1].split(":")[1] #침수전손
+            if len(acc)>2:
+                acc3 = acc[2].split(":")[1] #침수분손
+            if len(acc)>3:
+                acc4 = acc[3].split(":")[1] #도난
 
             # 보험사고(내차피해) 먼저 찾고, 없으면 보험사고(내차피헤) 찾기
             insur_mycar = info_insur.find("dt", string="보험사고(내차피해)")
@@ -268,9 +271,12 @@ for curr_page in range(1, last_page_num):
             else:
                 acc = info_insur.find("th", string="자동차보험 특수사고").find_next_sibling("td").get_text().split("/")
             acc1 = acc[0].split(":")[1] #전손
-            acc2 = acc[1].split(":")[1] #침수전손
-            acc3 = acc[2].split(":")[1] #침수분손
-            acc4 = acc[3].split(":")[1] #도난
+            if len(acc)>1:
+                acc2 = acc[1].split(":")[1] #침수전손
+            if len(acc)>2:
+                acc3 = acc[2].split(":")[1] #침수분손
+            if len(acc)>3:
+                acc4 = acc[3].split(":")[1] #도난
 
             # 보험사고(내차피해) 먼저 찾고, 없으면 보험사고(내차피헤) 찾기
             insur_mycar = info_insur.find("dt", string="보험사고(내차피해)")
@@ -320,9 +326,12 @@ for curr_page in range(1, last_page_num):
             else:
                 acc = info_insur.find("th", string="자동차보험 특수사고").find_next_sibling("td").get_text().split("/")
             acc1 = acc[0].split(":")[1] #전손
-            acc2 = acc[1].split(":")[1] #침수전손
-            acc3 = acc[2].split(":")[1] #침수분손
-            acc4 = acc[3].split(":")[1] #도난
+            if len(acc)>1:
+                acc2 = acc[1].split(":")[1] #침수전손
+            if len(acc)>2:
+                acc3 = acc[2].split(":")[1] #침수분손
+            if len(acc)>3:
+                acc4 = acc[3].split(":")[1] #도난
 
             #보험사고(내차피해)
             insur_mycar = info_insur.find("dt", string="보험사고(내차피해)")
