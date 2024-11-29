@@ -79,10 +79,13 @@ else:
         print('페이지 번호를 추출할 수 없습니다.')
 
 for curr_page in range(1, last_page_num):
+    driver.get(url+"&page="+str(curr_page))
+    time.sleep(0.4)
     results_html = driver.page_source
+    
     soup_page = BeautifulSoup(results_html, "html.parser")
     
-    cars=soup_page.find_all("p",attrs={"class":"tit"})
+    cars=soup_page.find_all("p",attrs={"class":"tit ellipsis"})
     links= []
 
         
@@ -101,7 +104,6 @@ for curr_page in range(1, last_page_num):
         #info
         name = soup.find("h3", attrs={"class":"tit"}).get_text()
         price = soup.find("span", attrs={"class": "price"}).get_text()
-
         #신차대비 명시여부
         if soup.find("b", attrs={"class": "percent"}):
             percent = soup.find("b", attrs={"class": "percent"}).get_text()
@@ -110,6 +112,8 @@ for curr_page in range(1, last_page_num):
             
 
         galdata = soup.find("div", attrs={"class": "gallery-data"})
+        if len(galdata.find("b").get_text().split()) < 2:
+            continue
         carnum = galdata.find("b").get_text().split()[1]
         regist=galdata.find_all("dd", attrs={"class":["txt-bar", "cg"]})[1].get_text()
 
@@ -138,25 +142,39 @@ for curr_page in range(1, last_page_num):
         #옵션정보
         option_table=soup.find("div",attrs={"class":"tbl-option"})
         res_options= []
-        #appearance
-        for appearence in appearances:
-            res_options.append(option_check(option_table, appearence))
+        rows = (option_table.find("tbody").find_all("tr"))
+        skip_to_next_link = False
+        
+        for row in rows:
+            if not row.text.strip():
+                skip_to_next_link = True
+                break
+            
+        if skip_to_next_link:
+            continue
+        # tbl-option의 tbody에 tr이 비어있는지 확인
+        if option_table.find("tbody").find("tr").find_all("td"):
+            #appearance
+            for appearence in appearances:
+                res_options.append(option_check(option_table, appearence))
 
-        #interiors
-        for interior in interiors:
-            res_options.append(option_check(option_table, interior))
+            #interiors
+            for interior in interiors:
+                res_options.append(option_check(option_table, interior))
 
-        #safeties
-        for safety in safeties:
-            res_options.append(option_check(option_table, safety))
+            #safeties
+            for safety in safeties:
+                res_options.append(option_check(option_table, safety))
 
-        #conveniences
-        for convenience in conveniences:
-            res_options.append(option_check(option_table, convenience))
+            #conveniences
+            for convenience in conveniences:
+                res_options.append(option_check(option_table, convenience))
 
-        # multimedia
-        for media in multimedia:
-            res_options.append(option_check(option_table, media))
+            # multimedia
+            for media in multimedia:
+                res_options.append(option_check(option_table, media))
+        else:
+            continue
 
 
         #보험이력이 있는지 여부
@@ -174,21 +192,45 @@ for curr_page in range(1, last_page_num):
             #보험처리이력
             info_insur = soup.find("div", attrs={"class": "info-insurance"})
             insur_cnt = info_insur.find("b", attrs={"class": "cr"}).get_text()
-            insur_change = info_insur.find("th", string="차량번호/소유자변경").find_next_sibling("td").get_text().split("/")[1]
+            insur_change = info_insur.find("dt", string="차량번호/소유자변경")
+            if insur_change is not None:
+                insur_change = insur_change.find_next_sibling("dd").get_text().split("/")[1]
+            else:
+                insur_change = info_insur.find("th", string="차량번호/소유자변경").find_next_sibling("td").get_text().split("/")[1]
 
-            acc = info_insur.find("th", string="자동차보험 특수사고").find_next_sibling("td").get_text().split("/")
+            acc = info_insur.find("dt", string="자동차보험 특수사고")
+            if acc is not None:
+                acc = acc.find_next_sibling("dd").get_text().split("/")
+            else:
+                acc = info_insur.find("th", string="자동차보험 특수사고").find_next_sibling("td").get_text().split("/")
             acc1 = acc[0].split(":")[1] #전손
             acc2 = acc[1].split(":")[1] #침수전손
             acc3 = acc[2].split(":")[1] #침수분손
             acc4 = acc[3].split(":")[1] #도난
 
-            #보험사고(내차피해)
-            insur_mycar = info_insur.find("th", string="보험사고(내차피해)").find_next_sibling("td").get_text().split()
+            # 보험사고(내차피해) 먼저 찾고, 없으면 보험사고(내차피헤) 찾기
+            insur_mycar = info_insur.find("dt", string="보험사고(내차피해)")
+            if insur_mycar is not None:
+                insur_mycar = insur_mycar.find_next_sibling("dd").get_text().split()
+            else:
+                insur_mycar = info_insur.find("dt", string="보험사고(내차피헤)")
+                if insur_mycar is not None:
+                    insur_mycar = insur_mycar.find_next_sibling("dd").get_text().split()
+                else:
+                    insur_mycar = info_insur.find("th",string="보험사고(내차피해)")
+                    if insur_mycar is not None:
+                        insur_mycar = insur_mycar.find_next_sibling("td").get_text().split()
+                    else:
+                        insur_mycar = info_insur.find("th", string="보험사고(내차피헤)").find_next_sibling("td").get_text().split()
             insur_mycar_cnt = insur_mycar[0]
-            insur_mycar_price = insur_mycar[1]
+            insur_mycar_price = insur_mycar[1]   
 
             #보험사고(타차가해)
-            insur_othercar = info_insur.find("th", string="보험사고(타차가해)").find_next_sibling("td").get_text().split()
+            insur_othercar = info_insur.find("dt", string="보험사고(타차가해)")
+            if insur_othercar is not None:
+                insur_othercar = insur_othercar.find_next_sibling("dd").get_text().split()
+            else:
+                insur_othercar = info_insur.find("th",string="보험사고(타차가해)").find_next_sibling("td").get_text().split()
             insur_othercar_cnt = insur_mycar[0]
             insur_othercar_price = insur_mycar[1]
 
@@ -212,21 +254,47 @@ for curr_page in range(1, last_page_num):
             #보험처리이력
             info_insur = soup.find("div", attrs={"class": "info-insurance"})
             insur_cnt = info_insur.find("b", attrs={"class": "cr"}).get_text()
-            insur_change = info_insur.find("th", string="차량번호/소유자변경").find_next_sibling("td").get_text().split("/")[1]
+                        # 차량번호/소유자변경을 dt로 찾고 없으면 th로 찾기
+            insur_change = info_insur.find("dt", string="차량번호/소유자변경")
+            if insur_change is not None:
+                insur_change = insur_change.find_next_sibling("dd").get_text().split("/")[1]
+            else:
+                insur_change = info_insur.find("th", string="차량번호/소유자변경").find_next_sibling("td").get_text().split("/")[1]
 
-            acc = info_insur.find("th", string="자동차보험 특수사고").find_next_sibling("td").get_text().split("/")
+                        # 자동차보험 특수사고를 dt로 찾고 없으면 th로 찾기
+            acc = info_insur.find("dt", string="자동차보험 특수사고")
+            if acc is not None:
+                acc = acc.find_next_sibling("dd").get_text().split("/")
+            else:
+                acc = info_insur.find("th", string="자동차보험 특수사고").find_next_sibling("td").get_text().split("/")
             acc1 = acc[0].split(":")[1] #전손
             acc2 = acc[1].split(":")[1] #침수전손
             acc3 = acc[2].split(":")[1] #침수분손
             acc4 = acc[3].split(":")[1] #도난
 
-            #보험사고(내차피해)
-            insur_mycar = info_insur.find("th", string="보험사고(내차피해)").find_next_sibling("td").get_text().split()
+            # 보험사고(내차피해) 먼저 찾고, 없으면 보험사고(내차피헤) 찾기
+            insur_mycar = info_insur.find("dt", string="보험사고(내차피해)")
+            if insur_mycar is not None:
+                insur_mycar = insur_mycar.find_next_sibling("dd").get_text().split()
+            else:
+                insur_mycar = info_insur.find("dt", string="보험사고(내차피헤)")
+                if insur_mycar is not None:
+                    insur_mycar = insur_mycar.find_next_sibling("dd").get_text().split()
+                else:
+                    insur_mycar = info_insur.find("th",string="보험사고(내차피해)")
+                    if insur_mycar is not None:
+                        insur_mycar = insur_mycar.find_next_sibling("td").get_text().split()
+                    else:
+                        insur_mycar = info_insur.find("th", string="보험사고(내차피헤)").find_next_sibling("td").get_text().split()
             insur_mycar_cnt = insur_mycar[0]
-            insur_mycar_price = insur_mycar[1]
+            insur_mycar_price = insur_mycar[1]   
 
             #보험사고(타차가해)
-            insur_othercar = info_insur.find("th", string="보험사고(타차가해)").find_next_sibling("td").get_text().split()
+            insur_othercar = info_insur.find("dt", string="보험사고(타차가해)")
+            if insur_othercar is not None:
+                insur_othercar = insur_othercar.find_next_sibling("dd").get_text().split()
+            else:
+                insur_othercar = info_insur.find("th",string="보험사고(타차가해)").find_next_sibling("td").get_text().split()
             insur_othercar_cnt = insur_mycar[0]
             insur_othercar_price = insur_mycar[1]
 
@@ -240,21 +308,45 @@ for curr_page in range(1, last_page_num):
             #보험처리이력
             info_insur = soup.find("div", attrs={"class": "info-insurance"})
             insur_cnt = info_insur.find("b", attrs={"class": "cr"}).get_text()
-            insur_change = info_insur.find("dt", string="차량번호/소유자변경").find_next_sibling("dd").get_text().split("/")[1]
+            insur_change = info_insur.find("dt", string="차량번호/소유자변경")
+            if insur_change is not None:
+                insur_change = insur_change.find_next_sibling("dd").get_text().split("/")[1]
+            else:
+                insur_change = info_insur.find("th", string="차량번호/소유자변경").find_next_sibling("td").get_text().split("/")[1]
 
-            acc = info_insur.find("dt", string="자동차보험 특수사고").find_next_sibling("dd").get_text().split("/")
+            acc = info_insur.find("dt", string="자동차보험 특수사고")
+            if acc is not None:
+                acc = acc.find_next_sibling("dd").get_text().split("/")
+            else:
+                acc = info_insur.find("th", string="자동차보험 특수사고").find_next_sibling("td").get_text().split("/")
             acc1 = acc[0].split(":")[1] #전손
             acc2 = acc[1].split(":")[1] #침수전손
             acc3 = acc[2].split(":")[1] #침수분손
             acc4 = acc[3].split(":")[1] #도난
 
             #보험사고(내차피해)
-            insur_mycar = info_insur.find("dt", string="보험사고(내차피헤)").find_next_sibling("dd").get_text().split()
+            insur_mycar = info_insur.find("dt", string="보험사고(내차피해)")
+            if insur_mycar is not None:
+                insur_mycar = insur_mycar.find_next_sibling("dd").get_text().split()
+            else:
+                insur_mycar = info_insur.find("dt", string="보험사고(내차피헤)")
+                if insur_mycar is not None:
+                    insur_mycar = insur_mycar.find_next_sibling("dd").get_text().split()
+                else:
+                    insur_mycar = info_insur.find("th",string="보험사고(내차피해)")
+                    if insur_mycar is not None:
+                        insur_mycar = insur_mycar.find_next_sibling("td").get_text().split()
+                    else:
+                        insur_mycar = info_insur.find("th", string="보험사고(내차피헤)").find_next_sibling("td").get_text().split()
             insur_mycar_cnt = insur_mycar[0]
             insur_mycar_price = insur_mycar[1]
 
             #보험사고(타차가해)
-            insur_othercar = info_insur.find("dt", string="보험사고(타차가해)").find_next_sibling("dd").get_text().split()
+            insur_othercar = info_insur.find("dt", string="보험사고(타차가해)")
+            if insur_othercar is not None:
+                insur_othercar = insur_othercar.find_next_sibling("dd").get_text().split()
+            else:
+                insur_othercar = info_insur.find("th",string="보험사고(타차가해)").find_next_sibling("td").get_text().split()
             insur_othercar_cnt = insur_mycar[0]
             insur_othercar_price = insur_mycar[1]
 
