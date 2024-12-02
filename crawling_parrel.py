@@ -105,7 +105,7 @@ def crawl_bobaedream():
 
     # Save to CSV
     df = pd.DataFrame(results, columns=cols)
-    df.to_csv('./results/on_sale_cars_test.csv', index=False)
+    df.to_csv('./results/on_sale_cars.csv', index=False)
     print("Crawling completed!")
 
 
