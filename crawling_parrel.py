@@ -1,6 +1,5 @@
 import pandas as pd
 import requests
-import time
 import re
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
@@ -10,18 +9,18 @@ from concurrent.futures import ThreadPoolExecutor
 def crawl_bobaedream():
     # 전역 설정
     url = 'https://www.bobaedream.co.kr/mycar/mycar_list.php?gubun=K'
-    info = ["링크", "이름", "가격", "신차대비가격", "신차가격", "차량번호", "최초등록일", "조회수",
-            "연식", "주행거리", "연료", "배기량", "색상", "보증정보", "설명글"]
-    spec = ["엔진형식", "연비", "최고출력", "최대토크", "차량중량"]
-    appearances = ["선루프", "파노라마선루프"]
-    interiors = ["열선시트(앞좌석)", "열선시트(뒷좌석)"]
-    safeties = ["동승석에어백", "후측방경보", "후방센서", "전방센서", "후방카메라", "전방카메라", "어라운드뷰"]
-    conveniences = ["열선핸들", "오토라이트", "크루즈컨트롤", "자동주차"]
-    multimedia = ["네비게이션(순정)", "네비게이션(비순정)"]
-    insurance = ["보험처리수", "소유자변경", "전손", "침수전손", "침수분손", "도난", 
-                 "내차피해_횟수", "내차피해_금액", "타차가해_횟수", "타차가해_금액"]
-    check = ["판금", "교환", "부식", "사고침수유무", "불법구조변경"]
-    img = ["이미지"]
+    info = ["link", "name", "price", "new_percent", "new_price", "number", "first_reg", "view",
+            "age", "mileage", "fuel", "cc", "color", "guarn", "description"]
+    spec = ["engine", "fuel_efficient", "max_out", "torque", "weight"]
+    appearances = ["sunroof", "pano_sunroof"]
+    interiors = ["heat_front", "heat_back"]
+    safeties = ["pass_air", "rear_warn", "rear_sensor", "front_sensor", "rear_camera", "front_camera", "around_view"]
+    conveniences = ["heat_handle", "auto_light", "cruise_cont", "auto_park"]
+    multimedia = ["navi_gen", "navi_non"]
+    insurance = ["insur_count", "owner_change", "total_loss", "flood_total_loss", "flood_part_loss", "theft", 
+                 "my_damage_count", "my_damage_amount", "other_damage_count", "other_damage_amount"]
+    check = ["panel", "replace", "corrosion", "flood_status", "illegal_modification"]
+    img = ["image"]
     cols = info + spec + appearances + interiors + safeties + conveniences + multimedia + insurance + check + img
 
     # 옵션 확인 함수
@@ -354,13 +353,12 @@ def crawl_bobaedream():
             continue
 
     # Parallel processing of links
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=100) as executor:
         results = list(executor.map(fetch_car_details, all_links))
-
-    # Save to CSV
+        
     df = pd.DataFrame(results, columns=cols)
-    df.to_csv('./results/on_sale_cars_test.csv', index=False, encoding="utf-8-sig")
     print("Crawling completed!")
+    return df
 
 
 if __name__ == "__main__":

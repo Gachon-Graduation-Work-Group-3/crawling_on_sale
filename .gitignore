@@ -1,5 +1,11 @@
 check.ipynb
+preprocessing.ipynb
+crawling.py
 
 .ipynb_checkpoints/
 
-results/
+results/*
+
+venv
+
+__pycache__
